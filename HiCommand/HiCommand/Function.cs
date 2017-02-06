@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
-using Amazon.Lambda.Serialization;
+using HiCommand.GeniusApi.Models;
+using HtmlAgilityPack;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 
@@ -23,15 +25,15 @@ namespace HiCommand
         /// <param name="input"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        public APIGatewayProxyResponse FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
+        public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
             var order = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(input.Body);
 
-            var response = RenderOrder(order);
+            var response = await RenderOrder(order);
             return response;
         }
 
-        private APIGatewayProxyResponse RenderOrder(IReadOnlyDictionary<string, StringValues> order)
+        private async Task<APIGatewayProxyResponse> RenderOrder(IReadOnlyDictionary<string, StringValues> order)
         {
 
             var response = new APIGatewayProxyResponse
@@ -48,8 +50,15 @@ namespace HiCommand
                 case "":
                     response.Body = $"hello there, {order["user_name"]}!";
                     break;
+
                 case "debug":
-                    response.Body = CreateDebugBody(order);
+                    response.Body = await CreateDebugBody(order);
+                    break;
+
+                case "quote":
+                    var artist = string.Join(" ", commands.Skip(1));
+                    await GetQuote(artist, order["channel_id"], order["response_url"]);
+                    response.Body = $"Thanks {order["user_name"]}! Enjoy.";
                     break;
 
             }
@@ -57,7 +66,7 @@ namespace HiCommand
             return response;
         }
 
-        private string CreateDebugBody(IReadOnlyDictionary<string, StringValues> order)
+        private async Task<string> CreateDebugBody(IReadOnlyDictionary<string, StringValues> order)
         {
             var payload = new Payload
             {
@@ -67,6 +76,57 @@ namespace HiCommand
             };
 
             return JsonConvert.SerializeObject(payload);
+        }
+
+        private async Task GetQuote(string artist, string channelId, string repsonseUrl)
+        {
+            string songTitle;
+            string songUrl;
+            string artistFullName;
+            var random = new Random();
+            using (var client = new HttpClient())
+            {
+                var clientToken = "asi8brVVjT1c7_6KFZACtXNV0l2avuESzdVwWcwTGW-mEVHLTINo9AN-3XfQ6zyK";
+                client.BaseAddress = new Uri("https://api.genius.com/");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", clientToken);
+
+                var search = client.GetAsync($"search?q={artist}");
+                var geniusSearchResponse = JsonConvert.DeserializeObject<ApiSearchResponse>(search.Result.Content.ReadAsStringAsync().Result);
+
+                var song = geniusSearchResponse.Response.Hits.Where(x => x.Type.Equals("song")).OrderBy(x => random.Next()).First();
+
+                var songSearch = client.GetAsync(song.Result.ApiPath);
+                var songSearchResponse = JsonConvert.DeserializeObject<ApiSongResponse>(songSearch.Result.Content.ReadAsStringAsync().Result);
+                songTitle = songSearchResponse.Response.Song.Title;
+                songUrl = songSearchResponse.Response.Song.Url;
+                artistFullName = songSearchResponse.Response.Song.Artist.Name;
+            }
+
+            string lyrics;
+            using (var client = new HttpClient())
+            {
+                var songPage = client.GetAsync(songUrl);
+                var html = songPage.Result.Content.ReadAsStringAsync().Result;
+                var htmlDocument = new HtmlDocument();
+                htmlDocument.LoadHtml(html);
+                
+                var lyricsNode = htmlDocument.DocumentNode.SelectNodes("//*[contains(@ng-click, 'open()')]").OrderBy(x => random.Next()).First();
+                lyrics = lyricsNode.InnerText;
+            }
+
+
+
+            var payload = new Payload
+            {
+                Channel = channelId,
+                Username = "Hi-Command",
+                Text = $"\"{lyrics}\" \n - {artistFullName}, <{songUrl}|{songTitle}>"
+            };
+
+            using (var client = new HttpClient())
+            {
+                await client.PostAsync(repsonseUrl, new StringContent(JsonConvert.SerializeObject(payload)));
+            }
         }
 
         //This class serializes into the Json payload required by Slack Incoming WebHooks
