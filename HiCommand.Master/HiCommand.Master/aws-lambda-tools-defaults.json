@@ -13,7 +13,7 @@
     "function-runtime" : "dotnetcore1.0",
     "function-memory-size" : 256,
     "function-timeout"     : 30,
-    "function-handler"     : "HiCommand::HiCommand.Function::FunctionHandler",
+    "function-handler"     : "HiCommand.Master::HiCommand.Master.Function::FunctionHandler",
     "function-name"        : "HiCommand",
     "function-role"        : "arn:aws:iam::703020330149:role/lambda_exec_HiCommand",
     "environment-variables" : ""

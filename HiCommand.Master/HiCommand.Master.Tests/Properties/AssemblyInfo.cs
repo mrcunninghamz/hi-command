@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HiCommand")]
+[assembly: AssemblyTitle("HiCommand.Master.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HiCommand")]
+[assembly: AssemblyProduct("HiCommand.Master.Tests")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("d2c9e53e-123f-405d-a89a-1af7e51bea0b")]
+[assembly: Guid("084c8447-988d-44c2-9254-7a92581b04b9")]
 
 // Version information for an assembly consists of the following four values:
 //
