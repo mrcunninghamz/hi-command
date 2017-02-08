@@ -1,16 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Amazon.Lambda.APIGatewayEvents;
-using Xunit;
-using Amazon.Lambda.Core;
 using Amazon.Lambda.TestUtilities;
-
-using HiCommand;
 using Newtonsoft.Json;
+using Xunit;
 
-namespace HiCommand.Tests
+namespace HiCommand.Master.Tests
 {
     public class FunctionTest
     {
@@ -27,7 +20,7 @@ namespace HiCommand.Tests
             };
             var response = function.FunctionHandler(request, context);
 
-            Assert.Equal("hello there, kmerecido!", response.Body);
+            Assert.Equal("hello there, kmerecido!", response.Result.Body);
         }
 
         [Fact]
@@ -43,7 +36,7 @@ namespace HiCommand.Tests
             };
             var response = function.FunctionHandler(request, context);
 
-            Assert.Equal("{\"channel\":\"c3lll2ht4\",\"username\":\"Hi-Command\",\"text\":\"{\\\"test\\\":[\\\"debug\\\"],\\\"command\\\":[\\\"/hi\\\"],\\\"channel_id\\\":[\\\"c3lll2ht4\\\"],\\\"text\\\":[\\\"debug\\\"],\\\"response_url\\\":[\\\"https://hooks.slack.com/commands/t3lll2dew/136180532529/zlpgyjfounk7wsllmewrvzpm\\\"]}\"}", response.Body);
+            Assert.Equal("{\"channel\":\"c3lll2ht4\",\"username\":\"Hi-Command\",\"text\":\"{\\\"test\\\":[\\\"debug\\\"],\\\"command\\\":[\\\"/hi\\\"],\\\"channel_id\\\":[\\\"c3lll2ht4\\\"],\\\"text\\\":[\\\"debug\\\"],\\\"response_url\\\":[\\\"https://hooks.slack.com/commands/t3lll2dew/136180532529/zlpgyjfounk7wsllmewrvzpm\\\"]}\"}", response.Result.Body);
         }
 
         public class DebugResponseBody

@@ -10,10 +10,11 @@
     },
     "Amazon.Lambda.Core": "1.0.0*",
     "Amazon.Lambda.TestUtilities": "1.0.0*",
-    "HiCommand": "1.0.0",
     "xunit": "2.1.0-*",
     "dotnet-test-xunit": "2.2.0-*",
-    "Microsoft.AspNetCore.WebUtilities": "1.1.0"
+    "Microsoft.AspNetCore.WebUtilities": "1.1.0",
+    "HiCommand.Master": "1.0.0-*",
+    "Core": "1.0.0-*"
   },
 
 
