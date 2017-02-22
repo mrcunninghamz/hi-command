@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Amazon.Lambda;
@@ -20,6 +21,8 @@ namespace HiCommand.Master
     public class Function
     {
         private ILambdaContext _context;
+
+        private string _body;
         /// <summary>
         /// The intro method that deligates tasks to other lambdas
         /// </summary>
@@ -29,7 +32,9 @@ namespace HiCommand.Master
         public async Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
             _context = context;
-            var order = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(input.Body);
+            _body = input.Body;
+
+            var order = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(_body);
             
             var response = await RenderOrder(order);
             return response;
@@ -59,7 +64,7 @@ namespace HiCommand.Master
 
                 case "quote":
                     await GetQuote(order);
-                    response.Body = "Let me think...";
+                    response.Body = await CreateQuoteLetMeThinky(order);
                     break;
 
             }
@@ -73,7 +78,23 @@ namespace HiCommand.Master
             {
                 Channel = order["channel_id"],
                 Username = "Hi-Command",
-                Text = JsonConvert.SerializeObject(order)
+                Text = JsonConvert.SerializeObject(_body)
+            };
+
+            return JsonConvert.SerializeObject(payload);
+        }
+
+        private async Task<string> CreateQuoteLetMeThinky(IReadOnlyDictionary<string, StringValues> order)
+        {
+            var commands = order["text"].ToString().Split(' ');
+            var artist = string.Join(" ", commands.Skip(1));
+
+            var payload = new Payload
+            {
+                ResponseType = "in_channel",
+                Channel = order["channel_id"],
+                Username = "Hi-Command",
+                Text = $"Thanks {order["user_name"]}, let me think of a good quote from {artist}."
             };
 
             return JsonConvert.SerializeObject(payload);

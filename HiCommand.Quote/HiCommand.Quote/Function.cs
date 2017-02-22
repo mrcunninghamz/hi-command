@@ -70,11 +70,10 @@ namespace HiCommand.Quote
                 var lyricsNode = htmlDocument.DocumentNode.SelectNodes("//*[contains(@ng-click, 'open()')]").OrderBy(x => random.Next()).First();
                 lyrics = lyricsNode.InnerText;
             }
-
-
-
+            
             var payload = new Payload
             {
+                ResponseType = "in_channel",
                 Channel = channelId,
                 Username = "Hi-Command",
                 Text = $"\"{lyrics}\" \n - {artistFullName}, <{songUrl}|{songTitle}>"

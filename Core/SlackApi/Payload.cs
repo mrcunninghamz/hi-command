@@ -4,6 +4,10 @@ namespace Core.SlackApi
 {
     public class Payload
     {
+
+        [JsonProperty("response_type")]
+        public string ResponseType { get; set; }
+
         [JsonProperty("channel")]
         public string Channel { get; set; }
 
