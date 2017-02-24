@@ -52,19 +52,26 @@ namespace HiCommand.Master
             var commands = order["text"].ToString().Split(' ');
             var command = commands[0] ?? string.Empty;
 
+            var slackMessage = CreateSlackMessage(order);
+
             switch (command)
             {
                 case "":
-                    response.Body = $"hello there, {order["user_name"]}!";
+                    response.Body = $"hello there, {slackMessage.Username}!";
                     break;
 
                 case "debug":
-                    response.Body = await CreateDebugBody(order);
+                    response.Body = await CreateDebugBody(slackMessage);
                     break;
 
                 case "quote":
-                    await GetQuote(order);
-                    response.Body = await CreateQuoteLetMeThinky(order);
+                    await CallLambda(slackMessage, "HiCommand_Quote");
+                    response.Body = await createLetMeThink(slackMessage);
+                    break;
+
+                case "animate":
+                    await CallLambda(slackMessage, "HiCommand_Giphy");
+                    response.Body = await createLetMeThink(slackMessage);
                     break;
 
             }
@@ -72,11 +79,11 @@ namespace HiCommand.Master
             return response;
         }
 
-        private async Task<string> CreateDebugBody(IReadOnlyDictionary<string, StringValues> order)
+        private async Task<string> CreateDebugBody(SlackMessage slackMessage)
         {
             var payload = new Payload
             {
-                Channel = order["channel_id"],
+                Channel = slackMessage.ChannelId,
                 Username = "Hi-Command",
                 Text = JsonConvert.SerializeObject(_body)
             };
@@ -84,37 +91,43 @@ namespace HiCommand.Master
             return JsonConvert.SerializeObject(payload);
         }
 
-        private async Task<string> CreateQuoteLetMeThinky(IReadOnlyDictionary<string, StringValues> order)
+        private async Task<string> createLetMeThink(SlackMessage slackMessage)
         {
-            var commands = order["text"].ToString().Split(' ');
-            var artist = string.Join(" ", commands.Skip(1));
-
             var payload = new Payload
             {
                 ResponseType = "in_channel",
-                Channel = order["channel_id"],
+                Channel = slackMessage.ChannelId,
                 Username = "Hi-Command",
-                Text = $"Thanks {order["user_name"]}, let me think of a good quote from {artist}."
+                Text = $"Thanks {slackMessage.Username}, let me think about that."
             };
 
             return JsonConvert.SerializeObject(payload);
         }
 
-        private async Task GetQuote(IReadOnlyDictionary<string, StringValues> order)
+        private SlackMessage CreateSlackMessage(IReadOnlyDictionary<string, StringValues> order)
         {
             var slackMessage = new SlackMessage
             {
+                Token = order["token"],
+                TeamId = order["team_id"],
+                TeamDomain = order["team_domain"],
                 ChannelId = order["channel_id"],
-                Text = order["text"],
-                ResponseUrl = order["response_url"]
+                ChannelName = order["channel_name"],
+                UserId = order["user_id"],
+                Username = order["user_name"],
+                Text = order["text"]
             };
 
+            return slackMessage;
+        }
 
+        private async Task CallLambda(SlackMessage slackMessage, string functionName)
+        {
             using (var awsClient = new AmazonLambdaClient())
             {
                 var request = new InvokeRequest()
                 {
-                    FunctionName = "HiCommand_Quote",
+                    FunctionName = functionName,
                     Payload = JsonConvert.SerializeObject(slackMessage),
                     InvocationType = InvocationType.Event
                 };
